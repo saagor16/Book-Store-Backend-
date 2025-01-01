@@ -1,7 +1,8 @@
-const mongoose = require('mongoose')
-const bcrypt = require('bcrypt');
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs'); // bcrypt এর পরিবর্তে bcryptjs ব্যবহার করছি
 
-const userSchema =  new mongoose.Schema({
+// User Schema
+const userSchema = new mongoose.Schema({
     username: {
         type: String,
         required: true,
@@ -14,18 +15,24 @@ const userSchema =  new mongoose.Schema({
     role: {
         type: String,
         enum: ['user', 'admin'],
+        default: 'user', // ডিফল্ট মান 'user'
         required: true
     }
-})
+});
 
-userSchema.pre('save', async function( next) {
-    if(!this.isModified('password')) return next();
-    this.password = await bcrypt.hash(this.password, 10);
-    next();
-}
-)
+// Pre-save Hook for Password Hashing
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) return next(); // যদি পাসওয়ার্ড পরিবর্তন না হয়, পরবর্তী ধাপে যান
+    try {
+        this.password = await bcrypt.hash(this.password, 10); // পাসওয়ার্ড হ্যাশ করুন
+        next();
+    } catch (error) {
+        next(error); // ত্রুটি থাকলে পরবর্তী ধাপে পাঠান
+    }
+});
 
-const User =  mongoose.model('User', userSchema);
+// Model Definition
+const User = mongoose.model('User', userSchema);
 
 module.exports = User;
 
